@@ -1,1 +1,1 @@
-# GUI_2022_23_01_DIE2VA
+# Prog 4 féléves feladat repository

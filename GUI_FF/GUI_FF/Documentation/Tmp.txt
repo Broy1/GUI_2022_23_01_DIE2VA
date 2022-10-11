@@ -8,4 +8,5 @@ Irányítás:
 -A játékos minden irányba tud haladni: jobbra-balra-le-fel
 -A játék tárgyakra a gravitáció azonban hat, felfele nem tudnak "esni".
 
-
+Menü lehetőségek:
+-Új játék, mentés, kilépés stb.

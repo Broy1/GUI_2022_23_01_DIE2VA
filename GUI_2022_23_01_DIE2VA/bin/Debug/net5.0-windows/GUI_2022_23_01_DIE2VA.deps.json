@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v5.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v5.0": {
+      "GUI_2022_23_01_DIE2VA/1.0.0": {
+        "runtime": {
+          "GUI_2022_23_01_DIE2VA.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "GUI_2022_23_01_DIE2VA/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

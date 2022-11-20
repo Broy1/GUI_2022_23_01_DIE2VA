@@ -63,8 +63,6 @@ namespace GUI_2022_23_01_DIE2VA.Logic
             int i = next_i;
             int j = next_j;
 
-            //ActivateGravity();
-
             // moving
             switch (direction)
             {
@@ -151,11 +149,6 @@ namespace GUI_2022_23_01_DIE2VA.Logic
                     GameMatrix[next_i, next_j + 1] = GameItem.floor;
                     KeysCollected++;
                 }
-                //if (GameMatrix[next_i + 1, next_j - 1] == GameItem.door)
-                //{
-                //    GameMatrix[next_i, next_j - 1] = GameItem.floor;
-                //    KeysCollected++;
-                //}
             }
 
             // if crate is the next block

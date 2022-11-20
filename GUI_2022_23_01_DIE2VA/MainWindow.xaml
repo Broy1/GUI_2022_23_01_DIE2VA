@@ -1,0 +1,23 @@
+﻿<Window x:Class="gameszko.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GUI_2022_23_01_DIE2VA"
+        mc:Ignorable="d"
+        Title="Main Menu" Height="450" Width="800">
+    <Grid x:Name="grid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.Background>
+            <ImageBrush ImageSource="https://cdn.discordapp.com/attachments/559850456084381721/1042474071826374777/Hotpot.png"/>
+        </Grid.Background>
+        <StackPanel VerticalAlignment="Center">
+            <Button Click="NewGameClick"  Content="Play!"  Margin="10" Grid.Column="0" Height="50" Width="207"/>
+            <Button Click="ExitClick"  Content="Exit"   Grid.Column="0" Height="50" Width="207"/>
+        </StackPanel>
+        <Label Content="Pikamaze" Foreground="Yellow" Grid.Column="1" FontSize="70"/>
+    </Grid>
+</Window>

@@ -1,5 +1,4 @@
-﻿using GUI_2022_23_01_DIE2VA.Interfaces;
-using GUI_2022_23_01_DIE2VA.Logic;
+﻿using GUI_2022_23_01_DIE2VA.Logic;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -48,6 +47,10 @@ namespace GUI_2022_23_01_DIE2VA.Renderer
                             case GameLogic.GameItem.player:
                                 brush = new ImageBrush
                                     (new BitmapImage(new Uri(Path.Combine("Images", "pika.bmp"), UriKind.RelativeOrAbsolute)));
+                                break;
+                            case GameLogic.GameItem.sand:
+                                brush = new ImageBrush
+                                    (new BitmapImage(new Uri(Path.Combine("Images", "sand.bmp"), UriKind.RelativeOrAbsolute)));
                                 break;
                             case GameLogic.GameItem.wall:
                                 brush = new ImageBrush

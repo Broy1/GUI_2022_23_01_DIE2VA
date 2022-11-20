@@ -1,10 +1,13 @@
-﻿using GUI_2022_23_01_DIE2VA.Interfaces;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace GUI_2022_23_01_DIE2VA.Logic
 {
@@ -12,21 +15,32 @@ namespace GUI_2022_23_01_DIE2VA.Logic
     {
         public enum GameItem
         {
-            player, wall, floor, door, key, crate
+            player,wall,floor,door,key,crate,sand
         }
 
         public enum Directions
         {
-            left, right, up, down
+            left,right,up,down
         }
 
         public GameItem[,] GameMatrix { get; set; }
 
         private Queue<string> levels;
 
+        private int KeysCollected { get; set; }
+
+        private int LevelCount { get; set; }
+
+        private ICollection<TimeSpan> highscores;
+
+        private Stopwatch sw;
+
         public GameLogic()
         {
+            sw = new Stopwatch();
+            highscores = new List<TimeSpan>();
             levels = new Queue<string>();
+            LevelCount = 1;
             var lvls = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Levels"),
                 "*.lvl");
 
@@ -34,43 +48,48 @@ namespace GUI_2022_23_01_DIE2VA.Logic
             {
                 levels.Enqueue(item);
             }
+            sw.Start();
             LoadNext(levels.Dequeue());
+            LevelCount++;
         }
 
         public void Move(Directions direction)
         {
+            // sets the coordinates to the next step and checks the type of the next block
             var coords = WhereAmI();
-            int i = coords[0];
-            int j = coords[1];
+            int next_i = coords[0];
+            int next_j = coords[1];
 
-            int old_i = i;
-            int old_j = j;
+            int i = next_i;
+            int j = next_j;
+
+            //ActivateGravity();
 
             // moving
             switch (direction)
             {
                 case Directions.left:
-                    if (j - 1 >= 0)
+                    if (next_j - 1 >= 0)
                     {
-                        j--;
+                        next_j--;
                     }
                     break;
                 case Directions.right:
-                    if (j + 1 < GameMatrix.GetLength(1))
+                    if (next_j + 1 < GameMatrix.GetLength(1))
                     {
-                        j++;
+                        next_j++;
                     }
                     break;
                 case Directions.up:
-                    if (i - 1 >= 0)
+                    if (next_i - 1 >= 0)
                     {
-                        i--;
+                        next_i--;
                     }
                     break;
                 case Directions.down:
-                    if (i + 1 < GameMatrix.GetLength(0))
+                    if (next_i + 1 < GameMatrix.GetLength(0))
                     {
-                        i++;
+                        next_i++;
                     }
                     break;
                 default:
@@ -78,80 +97,192 @@ namespace GUI_2022_23_01_DIE2VA.Logic
             }
 
             // if floor is the next block
-            if (GameMatrix[i, j] == GameItem.floor)
+            if (GameMatrix[next_i, next_j] == GameItem.floor)
             {
-                GameMatrix[i, j] = GameItem.player;
-                GameMatrix[old_i, old_j] = GameItem.floor;
+                GameMatrix[next_i, next_j] = GameItem.player;
+                GameMatrix[i, j] = GameItem.floor;
+
+                //if (GameMatrix[i - 1, j] != GameItem.floor
+                //&& GameMatrix[i - 1, j] != GameItem.wall)
+                //{
+                //    ;
+                //    GameItem tmp = GameMatrix[i - 1, j];
+                //    Fall(i - 1, j, tmp, direction);
+                //}
             }
 
             // if key is the next block
-            else if (GameMatrix[i, j] == GameItem.key)
+            else if (GameMatrix[next_i, next_j] == GameItem.key)
             {
-                // pushing to the right
-                if (direction == Directions.right)
+                // if the place is empty after the key you can push it
+                if (GameMatrix[next_i, next_j + 1] == GameItem.floor || GameMatrix[next_i, next_j - 1] == GameItem.floor)
                 {
-                    GameMatrix[i, j] = GameItem.player;
-                    GameMatrix[old_i, old_j] = GameItem.floor;
-                    GameMatrix[i, j + 1] = GameItem.key;
-
-                    // if the new place under the key is empty it will fall
-                    if (GameMatrix[i + 1, j + 1] == GameItem.floor)
+                    // pushing to the right
+                    if (direction == Directions.right)
                     {
-                        Fall(i, j, GameItem.key, Directions.right);
+                        GameMatrix[next_i, next_j] = GameItem.player;
+                        GameMatrix[i, j] = GameItem.floor;
+                        GameMatrix[next_i, next_j + 1] = GameItem.key;
+
+                        // if the new place under the key is empty it will fall
+                        if (GameMatrix[next_i + 1, next_j + 1] == GameItem.floor)
+                        {
+                            Fall(next_i, next_j, GameItem.key, Directions.right);
+                        }
+                    }
+                    // pushing to the left
+                    else if (direction == Directions.left)
+                    {
+                        GameMatrix[next_i, next_j] = GameItem.player;
+                        GameMatrix[i, j] = GameItem.floor;
+                        GameMatrix[next_i, next_j - 1] = GameItem.key;
+
+                        // if the new place under the key is empty it will fall
+                        if (GameMatrix[next_i + 1, next_j - 1] == GameItem.floor)
+                        {
+                            Fall(next_i, next_j, GameItem.key, Directions.left);
+                        }
                     }
                 }
-                // pushing to the left
-                else if (direction == Directions.left)
-                {
-                    GameMatrix[i, j] = GameItem.player;
-                    GameMatrix[old_i, old_j] = GameItem.floor;
-                    GameMatrix[i, j - 1] = GameItem.key;
 
-                    // if the new place under the key is empty it will fall
-                    if (GameMatrix[i + 1, j - 1] == GameItem.floor)
-                    {
-                        Fall(i, j, GameItem.key, Directions.left);
-                    }
+                // check if under the key is the door
+                if (GameMatrix[next_i + 1, next_j + 1] == GameItem.door)
+                {
+                    GameMatrix[next_i, next_j + 1] = GameItem.floor;
+                    KeysCollected++;
                 }
+                //if (GameMatrix[next_i + 1, next_j - 1] == GameItem.door)
+                //{
+                //    GameMatrix[next_i, next_j - 1] = GameItem.floor;
+                //    KeysCollected++;
+                //}
             }
 
             // if crate is the next block
-            else if (GameMatrix[i, j] == GameItem.crate)
+            else if (GameMatrix[next_i, next_j] == GameItem.crate)
             {
-                // pushing to the right
-                if (direction == Directions.right)
+                // if the place is empty after the key you can push it
+                if (GameMatrix[next_i, next_j + 1] == GameItem.floor || GameMatrix[next_i, next_j - 1] == GameItem.floor)
                 {
-                    GameMatrix[i, j] = GameItem.player;
-                    GameMatrix[old_i, old_j] = GameItem.floor;
-                    GameMatrix[i, j + 1] = GameItem.crate;
-
-                    // if the new place under the key is empty it will fall
-                    if (GameMatrix[i + 1, j + 1] == GameItem.floor)
+                    // pushing to the right
+                    if (direction == Directions.right)
                     {
-                        Fall(i, j, GameItem.crate, Directions.right);
+                        GameMatrix[next_i, next_j] = GameItem.player;
+                        GameMatrix[i, j] = GameItem.floor;
+                        GameMatrix[next_i, next_j + 1] = GameItem.crate;
+
+                        // if the new place under the key is empty it will fall
+                        if (GameMatrix[next_i + 1, next_j + 1] == GameItem.floor)
+                        {
+                            Fall(next_i, next_j, GameItem.crate, Directions.right);
+                        }
                     }
-                }
-                // pushing to the left
-                else if (direction == Directions.left)
-                {
-                    GameMatrix[i, j] = GameItem.player;
-                    GameMatrix[old_i, old_j] = GameItem.floor;
-                    GameMatrix[i, j - 1] = GameItem.crate;
-
-                    // if the new place under the key is empty it will fall
-                    if (GameMatrix[i + 1, j - 1] == GameItem.floor)
+                    // pushing to the left
+                    else if (direction == Directions.left)
                     {
-                        Fall(i, j, GameItem.crate, Directions.left);
+                        GameMatrix[next_i, next_j] = GameItem.player;
+                        GameMatrix[i, j] = GameItem.floor;
+                        GameMatrix[next_i, next_j - 1] = GameItem.crate;
+
+                        // if the new place under the key is empty it will fall
+                        if (GameMatrix[next_i + 1, next_j - 1] == GameItem.floor)
+                        {
+                            Fall(next_i, next_j, GameItem.crate, Directions.left);
+                        }
                     }
                 }
             }
 
-            // entering next level through the door
-            else if (GameMatrix[i, j] == GameItem.door)
+            // sand disappears
+            else if (GameMatrix[next_i,next_j] == GameItem.sand)
             {
-                if (levels.Count > 0)
+                GameMatrix[next_i, next_j] = GameItem.player;
+                GameMatrix[i, j] = GameItem.floor;
+            }
+
+            // entering next level through the door
+            else if (GameMatrix[next_i, next_j] == GameItem.door)
+            {
+                // loading next level, saving current time
+                if (levels.Count > 0 && KeysCollected == LevelCount)
                 {
+                    TimeSpan ts = sw.Elapsed;
+                    MessageBox.Show($"Level complete! Your current time: {sw.Elapsed.Minutes}:{sw.Elapsed.Seconds}", "Keep going!", MessageBoxButton.OK);
+                    KeysCollected = 0;
+                    LevelCount++;
                     LoadNext(levels.Dequeue());
+                }
+                else
+                {
+                    if (KeysCollected == LevelCount)
+                    {
+                        // end of the adventure
+                        sw.Stop();
+                        TimeSpan comptime = sw.Elapsed;
+                        MessageBox.Show($"Well done! You caught them all! Your time: {comptime}","Congratulations!", MessageBoxButton.OK);
+                        this.SaveHighScore(comptime);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"You need to collect {LevelCount - KeysCollected} more Pokeballs!", "Not enough Pokeballs!");
+
+                    }
+                }
+            }
+
+        }
+
+        public void SaveHighScore(TimeSpan time)
+        {
+            if (File.Exists("./highscore.json"))
+            {
+                this.highscores = this.LoadHighscore();
+                this.highscores.Add(time);
+                this.highscores = this.highscores.OrderBy(t => t.TotalSeconds).ToList();
+            }
+            else
+            {
+                this.highscores.Add(time);
+            }
+            string highscore = JsonConvert.SerializeObject(this.highscores);
+            File.WriteAllText("./highscore.json", highscore);
+        }
+
+        private ICollection<TimeSpan> LoadHighscore()
+        {
+            this.highscores = JsonConvert.DeserializeObject<IList<TimeSpan>>(File.ReadAllText("./highscore.json"));
+            return this.highscores;
+        }
+
+        public void ActivateGravity()
+        {
+            for (int i = 0; i < GameMatrix.GetLength(1); i++)
+            {
+                for (int j = 0; j < GameMatrix.GetLength(0); j++)
+                {
+                    GameItem item = GameMatrix[i, j];
+                    if (item == GameItem.crate ||
+                        item == GameItem.key)
+                    {
+                        if (GameMatrix[i + 1, j] == GameItem.floor )
+                        {
+                            FreeFall(i,j,item);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void FreeFall(int i, int j, GameItem item)
+        {
+            while (GameMatrix[i + 1, j] == GameItem.floor)
+            {
+                GameMatrix[i + 1, j] = item;
+                GameMatrix[i, j] = GameItem.floor;
+                i++;
+                if (i == 19)
+                {
+                    break;
                 }
             }
         }
@@ -215,6 +346,7 @@ namespace GUI_2022_23_01_DIE2VA.Logic
                 case 'd': return GameItem.door;
                 case 'k': return GameItem.key;
                 case 'c': return GameItem.crate;
+                case 's': return GameItem.sand;
                 default:
                     return GameItem.floor;
             }

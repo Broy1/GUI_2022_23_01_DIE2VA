@@ -15,9 +15,6 @@
 obj/
 bin/
 
-*.git
-obj
-bin
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

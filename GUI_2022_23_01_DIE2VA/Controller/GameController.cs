@@ -34,6 +34,9 @@ namespace GUI_2022_23_01_DIE2VA.Controller
                 case Key.Left:
                     control.Move(GameLogic.Directions.left);
                     break;
+                case Key.R:
+                    control.ResetLevel();
+                    break;
             }
         }
     }

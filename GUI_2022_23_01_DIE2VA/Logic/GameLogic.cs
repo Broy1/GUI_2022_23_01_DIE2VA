@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,11 +25,14 @@ namespace GUI_2022_23_01_DIE2VA.Logic
 
         public GameItem[,] GameMatrix { get; set; }
 
-        private Queue<string> levels;
+        //private Queue<string> levels;
+
+        private List<string> levels;
 
         private int KeysCollected { get; set; }
 
         private int LevelCount { get; set; }
+        public int lvlindex { get; set; }
 
         private ICollection<TimeSpan> highscores;
 
@@ -39,18 +42,28 @@ namespace GUI_2022_23_01_DIE2VA.Logic
         {
             sw = new Stopwatch();
             highscores = new List<TimeSpan>();
-            levels = new Queue<string>();
-            LevelCount = 1;
+            //levels = new Queue<string>();
+            levels = new List<string>();
+            LevelCount = 2;
             var lvls = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Levels"),
                 "*.lvl");
+            lvlindex = 0;
 
             foreach (var item in lvls)
             {
-                levels.Enqueue(item);
+                levels.Add(item);
             }
+
             sw.Start();
-            LoadNext(levels.Dequeue());
-            LevelCount++;
+            LoadNext(levels[lvlindex]);
+
+            //LevelCount++;
+        }
+
+        public void ResetLevel()
+        {
+            KeysCollected = 0;
+            LoadNext(levels[lvlindex]);
         }
 
         public void Move(Directions direction)
@@ -197,13 +210,14 @@ namespace GUI_2022_23_01_DIE2VA.Logic
             else if (GameMatrix[next_i, next_j] == GameItem.door)
             {
                 // loading next level, saving current time
-                if (levels.Count > 0 && KeysCollected == LevelCount)
+                if (KeysCollected == LevelCount && KeysCollected != 6)
                 {
                     TimeSpan ts = sw.Elapsed;
                     MessageBox.Show($"Level complete! Your current time: {sw.Elapsed.Minutes}:{sw.Elapsed.Seconds}", "Keep going!", MessageBoxButton.OK);
                     KeysCollected = 0;
                     LevelCount++;
-                    LoadNext(levels.Dequeue());
+                    lvlindex++;
+                    LoadNext(levels[lvlindex]);
                 }
                 else
                 {
@@ -254,7 +268,7 @@ namespace GUI_2022_23_01_DIE2VA.Logic
                 for (int j = 0; j < GameMatrix.GetLength(0); j++)
                 {
                     GameItem item = GameMatrix[i, j];
-                    if (item == GameItem.crate ||
+                    if (item == GameItem.crate || // if more items needed to affected by gravity it can be added here
                         item == GameItem.key)
                     {
                         if (GameMatrix[i + 1, j] == GameItem.floor )
@@ -343,6 +357,6 @@ namespace GUI_2022_23_01_DIE2VA.Logic
                 default:
                     return GameItem.floor;
             }
-        }
+        } 
     }
 }
